@@ -8,6 +8,12 @@ use serde::{Serialize, Serializer};
 /// Serializes as Base64
 pub struct Blob(Vec<u8>);
 
+impl Blob {
+    pub fn get_bytes(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 impl From<Vec<u8>> for Blob {
     fn from(v: Vec<u8>) -> Self {
         Blob(v)
