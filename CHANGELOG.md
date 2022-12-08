@@ -1,5 +1,15 @@
 # ChangeLog
 
+## [0.4.0] - 2022-08-22
+
+ - Improve how `CHAR`, `BINARY`, and `MEDIUMBLOB` columns are handled (thanks @yonran in #2)
+ - Upgrade `uuid` dependency to version 1
+
+## [0.3.2] - 2022-01-18
+
+ - Improve how `serde` is imported
+ - Bump `bigdecimal` to 0.3
+
 ## [0.3.1] - 2020-08-31
 
  - handle 3-byte varint length prefixes on blobs
