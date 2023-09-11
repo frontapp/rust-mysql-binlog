@@ -182,6 +182,7 @@ fn parse_one_row<R: Read + Seek>(
     .unwrap();
     let mut null_index = 0;
     for (i, column_definition) in this_table_map.columns.iter().enumerate() {
+        println!("parsing column {} ({:?})", i, column_definition);
         if !present_bitmask.is_set(i) {
             row.push(None);
             continue;
@@ -196,7 +197,7 @@ fn parse_one_row<R: Read + Seek>(
         row.push(Some(val));
         null_index += 1;
     }
-    //println!("finished row: {:?}", row);
+    println!("finished row: {:?}", row);
     Ok(row)
 }
 
