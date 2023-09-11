@@ -184,6 +184,7 @@ fn parse_one_row<R: Read + Seek>(
     for (i, column_definition) in this_table_map.columns.iter().enumerate() {
         println!("parsing column {} ({:?})", i, column_definition);
         if !present_bitmask.is_set(i) {
+            println!("Skipping!!");
             row.push(None);
             continue;
         }
