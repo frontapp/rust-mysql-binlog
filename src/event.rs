@@ -185,7 +185,7 @@ fn parse_one_row<R: Read + Seek>(
         println!("parsing column {} ({:?})", i, column_definition);
         if !present_bitmask.is_set(i) {
             println!("Skipping!!");
-            println!("Column value {:?}", column_definition.read_value(&mut cursor).unwrap());
+            // println!("Column value {:?}", column_definition.read_value(&mut cursor).unwrap());
             row.push(None);
             continue;
         }
