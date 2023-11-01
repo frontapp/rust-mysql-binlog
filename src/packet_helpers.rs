@@ -59,7 +59,7 @@ pub(crate) fn read_uint24<R: Read>(r: &mut R) -> io::Result<u32> {
 pub(crate) fn read_int24<R: Read>(r: &mut R) -> io::Result<i32> {
     let mut buf = [0u8; 4];
     r.read_exact(&mut buf[0..3])?;
-    Ok(LittleEndian::read_i32(&buf))
+    Ok((LittleEndian::read_i32(&buf) << 8) >> 8)
 }
 
 pub(crate) fn read_one_byte_length_prefixed_bytes<R: Read>(r: &mut R) -> io::Result<Vec<u8>> {
