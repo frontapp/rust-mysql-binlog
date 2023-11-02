@@ -344,7 +344,7 @@ mod tests {
         let parsed = parse(blob).expect("should parse");
         assert_eq!(
             parsed,
-            json!({"date": null,"datetime":{"DateTime":{"day":7,"hour":82,"minute":69,"month":78,"second":44,"subsecond":0,"year":184640201}},"time":{"Time":{"hours":0,"minutes":0,"seconds":0,"subseconds":0}},"timestamp":{"Timestamp":{"subsecond":0,"unix_time":1291845632}}})
+            json!({"date": null,"datetime":{"DateTime":{"day":7,"hour":82,"minute":69,"month":78,"second":44,"microsecond":0,"year":184640201}},"time":{"Time":{"hours":0,"minutes":0,"seconds":0,"microseconds":0}},"timestamp":{"Timestamp":{"microsecond":0,"unix_time":1291845632}}})
         );
     }
 }

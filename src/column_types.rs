@@ -162,7 +162,7 @@ impl ColumnType {
             ))),
             &ColumnType::Timestamp => Ok(MySQLValue::Timestamp {
                 unix_time: r.read_i32::<LittleEndian>()?,
-                subsecond: 0,
+                microsecond: 0,
             }),
             &ColumnType::LongLong => Ok(MySQLValue::SignedInteger(r.read_i64::<LittleEndian>()?)),
             &ColumnType::Int24 => {
@@ -207,7 +207,7 @@ impl ColumnType {
                     hours,
                     minutes,
                     seconds,
-                    subseconds: 0,
+                    microseconds: 0,
                 })
             }
             &ColumnType::DateTime => {
@@ -233,7 +233,7 @@ impl ColumnType {
                             hour,
                             minute,
                             second,
-                            subsecond: 0,
+                            microsecond: 0,
                         })
                     }
                 }
@@ -244,7 +244,7 @@ impl ColumnType {
             &ColumnType::DateTime2(pack_length) => {
                 let mut buf = [0u8; 5];
                 r.read_exact(&mut buf)?;
-                let subsecond = read_datetime_subsecond_part(r, pack_length)?;
+                let microsecond = read_datetime_subsecond_part_as_us(r, pack_length)?;
                 // one bit unused (sign, but always positive
                 buf[0] &= 0x7f;
                 // 17 bits of yearmonth (all of buf[0] and buf[1] and the top 2 bits of buf[2]
@@ -267,15 +267,15 @@ impl ColumnType {
                     hour,
                     minute,
                     second,
-                    subsecond,
+                    microsecond,
                 })
             }
             &ColumnType::Timestamp2(pack_length) => {
                 let whole_part = r.read_i32::<BigEndian>()?;
-                let frac_part = read_datetime_subsecond_part(r, pack_length)?;
+                let microsecond = read_datetime_subsecond_part_as_us(r, pack_length)?;
                 Ok(MySQLValue::Timestamp {
                     unix_time: whole_part,
-                    subsecond: frac_part,
+                    microsecond,
                 })
             }
             &ColumnType::Time2(pack_length) => {
@@ -289,12 +289,12 @@ impl ColumnType {
                 let hours = (((buf[0] & 0x3f) as u32) << 4) | (((buf[1] & 0xf0) as u32) >> 4);
                 let minutes = (((buf[1] & 0x0f) as u32) << 2) | (((buf[2] & 0xb0) as u32) >> 6);
                 let seconds = (buf[2] & 0x3f) as u32;
-                let frac_part = read_datetime_subsecond_part(r, pack_length)?;
+                let microseconds = read_datetime_subsecond_part_as_us(r, pack_length)?;
                 Ok(MySQLValue::Time {
                     hours,
                     minutes,
                     seconds,
-                    subseconds: frac_part,
+                    microseconds,
                 })
             }
             &ColumnType::Blob(length_bytes) => {

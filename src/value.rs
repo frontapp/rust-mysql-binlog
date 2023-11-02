@@ -43,7 +43,7 @@ pub enum MySQLValue {
         hours: u32,
         minutes: u32,
         seconds: u32,
-        subseconds: u32,
+        microseconds: u32,
     },
     DateTime {
         year: u32,
@@ -52,13 +52,13 @@ pub enum MySQLValue {
         hour: u32,
         minute: u32,
         second: u32,
-        subsecond: u32,
+        microsecond: u32,
     },
     Json(serde_json::Value),
     Decimal(bigdecimal::BigDecimal),
     Timestamp {
         unix_time: i32,
-        subsecond: u32,
+        microsecond: u32,
     },
     Null,
 }

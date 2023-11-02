@@ -186,11 +186,14 @@ pub(crate) fn read_new_decimal<R: Read>(
     Ok(decimal)
 }
 
-pub(crate) fn read_datetime_subsecond_part<R: Read>(r: &mut R, pack_length: u8) -> io::Result<u32> {
+pub(crate) fn read_datetime_subsecond_part_as_us<R: Read>(
+    r: &mut R,
+    pack_length: u8,
+) -> io::Result<u32> {
     Ok(match pack_length {
         0 => 0u32,
-        1 | 2 => read_known_length_integer_be(r, 1)? as u32,
-        3 | 4 => read_known_length_integer_be(r, 2)? as u32,
+        1 | 2 => read_known_length_integer_be(r, 1)? as u32 * 10_000,
+        3 | 4 => read_known_length_integer_be(r, 2)? as u32 * 100,
         5 | 6 => read_known_length_integer_be(r, 3)? as u32,
         _ => 0u32,
     })
