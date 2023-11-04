@@ -52,6 +52,18 @@ pub enum TypeCode {
     GtidLogEvent,
     AnonymousGtidLogEvent,
     PreviousGtidsLogEvent,
+    MariaAnnotateRowsEvent,
+    MariaBinlogCheckpointEvent,
+    MariaGtidEvent,
+    MariaGtidListEvent,
+    MariaStartEncryptionEvent,
+    MariaQueryCompresedEvent,
+    MariaWriteRowsCompressedEventV1,
+    MariaUpdateRowsCompressedEventV1,
+    MariaDeleteRowsCompressedEventV1,
+    MariaWriteRowsCompressedEventV2,
+    MariaUpdateRowsCompressedEventV2,
+    MariaDeleteRowsCompressedEventV2,
     OtherUnknown(u8),
 }
 
@@ -94,6 +106,18 @@ impl TypeCode {
             33 => TypeCode::GtidLogEvent,
             34 => TypeCode::AnonymousGtidLogEvent,
             35 => TypeCode::PreviousGtidsLogEvent,
+            160 => TypeCode::MariaAnnotateRowsEvent,
+            161 => TypeCode::MariaBinlogCheckpointEvent,
+            162 => TypeCode::MariaGtidEvent,
+            163 => TypeCode::MariaGtidListEvent,
+            164 => TypeCode::MariaStartEncryptionEvent,
+            165 => TypeCode::MariaQueryCompresedEvent,
+            166 => TypeCode::MariaWriteRowsCompressedEventV1,
+            167 => TypeCode::MariaUpdateRowsCompressedEventV1,
+            168 => TypeCode::MariaDeleteRowsCompressedEventV1,
+            169 => TypeCode::MariaWriteRowsCompressedEventV2,
+            170 => TypeCode::MariaUpdateRowsCompressedEventV2,
+            171 => TypeCode::MariaDeleteRowsCompressedEventV2,
             i => TypeCode::OtherUnknown(i),
         }
     }
@@ -117,6 +141,13 @@ impl From<u8> for ChecksumAlgorithm {
 }
 
 pub type RowData = Vec<Option<MySQLValue>>;
+
+#[derive(Debug)]
+pub struct MariaGtidListEntry {
+    pub domain_id: u32,
+    pub server_id: u32,
+    pub sequence_number: u64,
+}
 
 #[derive(Debug)]
 pub enum EventData {
@@ -159,6 +190,22 @@ pub enum EventData {
     DeleteRowsEvent {
         table_id: u64,
         rows: Vec<RowEvent>,
+    },
+    MariaAnnotateRowsEvent {
+        query: String,
+    },
+    MariaBinlogCheckpointEvent {
+        filename: String,
+    },
+    MariaGtidEvent {
+        sequence_number: u64,
+        domain_id: u32,
+        flags: u8,
+        commit_id: Option<u64>,
+    },
+    MariaGtidListEvent {
+        flags: u8,
+        gtid_list: Vec<MariaGtidListEntry>,
     },
 }
 
@@ -442,6 +489,50 @@ impl EventData {
                     table_id: ev.table_id,
                     rows: ev.rows,
                 }))
+            }
+            TypeCode::MariaAnnotateRowsEvent => {
+                let query = std::str::from_utf8(data).unwrap().to_string();
+                Ok(Some(EventData::MariaAnnotateRowsEvent { query }))
+            }
+            TypeCode::MariaBinlogCheckpointEvent => {
+                let length = cursor.read_u32::<LittleEndian>()?;
+                let filename =
+                    String::from_utf8(read_nbytes(&mut cursor, length as usize)?).unwrap();
+                Ok(Some(EventData::MariaBinlogCheckpointEvent { filename }))
+            }
+            TypeCode::MariaGtidEvent => {
+                let sequence_number = cursor.read_u64::<LittleEndian>()?;
+                let domain_id = cursor.read_u32::<LittleEndian>()?;
+                let flags = cursor.read_u8()?;
+                let commit_id = if flags & 2 != 0 {
+                    Some(cursor.read_u64::<LittleEndian>()?)
+                } else {
+                    None
+                };
+                // Not implemented: XA metadata, multi-engine metadata
+                Ok(Some(EventData::MariaGtidEvent {
+                    sequence_number,
+                    domain_id,
+                    flags,
+                    commit_id,
+                }))
+            }
+            TypeCode::MariaGtidListEvent => {
+                let count_and_flags = cursor.read_u32::<LittleEndian>()?;
+                let count = count_and_flags & ((1 << 28) - 1);
+                let flags = (count_and_flags >> 28) as u8;
+                let mut gtid_list = Vec::with_capacity(flags as usize);
+                for _ in 0..count {
+                    let domain_id = cursor.read_u32::<LittleEndian>()?;
+                    let server_id = cursor.read_u32::<LittleEndian>()?;
+                    let sequence_number = cursor.read_u64::<LittleEndian>()?;
+                    gtid_list.push(MariaGtidListEntry {
+                        domain_id,
+                        server_id,
+                        sequence_number,
+                    });
+                }
+                Ok(Some(EventData::MariaGtidListEvent { flags, gtid_list }))
             }
             _ => Ok(None),
         }
