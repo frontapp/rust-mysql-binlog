@@ -600,6 +600,10 @@ impl Event {
         self.type_code
     }
 
+    pub fn server_id(&self) -> u32 {
+        self.server_id
+    }
+
     pub fn timestamp(&self) -> u32 {
         self.timestamp
     }
