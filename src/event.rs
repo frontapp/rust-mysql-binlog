@@ -165,6 +165,10 @@ pub enum EventData {
         schema: String,
         query: String,
     },
+    RotateEvent {
+        filename: String,
+        position: u64,
+    },
     FormatDescriptionEvent {
         binlog_version: u16,
         server_version: String,
@@ -356,6 +360,12 @@ impl EventData {
     ) -> Result<Option<Self>, EventParseError> {
         let mut cursor = Cursor::new(data);
         match type_code {
+            TypeCode::RotateEvent => {
+                let position = cursor.read_u64::<LittleEndian>()?;
+                let mut filename = String::new();
+                cursor.read_to_string(&mut filename)?;
+                Ok(Some(EventData::RotateEvent { filename, position }))
+            }
             TypeCode::FormatDescriptionEvent => {
                 let binlog_version = cursor.read_u16::<LittleEndian>()?;
                 if binlog_version != 4 {
