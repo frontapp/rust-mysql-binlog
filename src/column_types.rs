@@ -100,7 +100,6 @@ impl ColumnType {
             }
             ColumnType::VarString | ColumnType::VarChar(_) => {
                 let max_length = cursor.read_u16::<LittleEndian>()?;
-                assert!(max_length != 0);
                 ColumnType::VarChar(max_length)
             }
             ColumnType::Bit(..) => unimplemented!(),
